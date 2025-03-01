@@ -33,6 +33,10 @@ sudo apt install ansible
     GRUB_CMDLINE_LINUX_DEFAULT="quiet splash systemd.unified_cgroup_hierarchy=0"
     ```
 
+## Plugging in robots
+
+Instructions on how to add physical robots to the Remrob system are available at [robots/README.md](./robots/README.md)
+
 # (optional) Hardware accelerated containers
 
 ## Pre-requisites
