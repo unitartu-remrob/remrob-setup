@@ -1,0 +1,35 @@
+- name: Setup application
+  hosts: localhost
+
+  vars_prompt:
+    - name: app_name
+      prompt: "Enter application directory"
+      default: remrob-app
+    - name: db_password
+      prompt: "Enter PostgreSQL DB password"
+      default: mypassword
+    - name: jwt_secret
+      prompt: "Enter JWT Auth secret"
+      default: super-secret
+
+  vars:
+    remrob_user: "{{ lookup('env', 'USER') }}"
+    app_dir: "{{ ansible_env.HOME  }}/{{ app_name }}"
+    db_user: remrob
+    db_name: remrob
+
+  pre_tasks:
+    - name: Set db_password env
+      ansible.builtin.set_fact:
+        db_password: "{{ db_password }}"
+    - name: Set app_dir env
+      ansible.builtin.set_fact:
+        app_dir: "{{ app_dir }}"
+
+  roles:
+    - role: common
+      tags: [ common, remrob-server, remrob-webapp ]
+    - role: remrob-server
+      tags: [ remrob-server ]
+    - role: remrob-webapp
+      tags: [ remrob-webapp ]

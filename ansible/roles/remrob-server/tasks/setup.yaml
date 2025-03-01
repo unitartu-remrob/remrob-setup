@@ -1,0 +1,69 @@
+- name: Node env
+  ansible.builtin.include_role:
+    name: shared
+    tasks_from: set-nvm.yaml
+
+- name: Setup remrob-server service
+  block:
+    - name: Clone remrob-server repository
+      ansible.builtin.git:
+        repo: 'https://github.com/unitartu-remrob/remrob-server.git'
+        dest: "{{ service_dir }}"
+        version: ros2
+        update: yes
+
+    - name: Install appropriate Node version
+      ansible.builtin.shell: "{{ source_nvm }}; nvm install"
+      args:
+        chdir: "{{ service_dir }}"
+
+    - name: Install npm modules
+      ansible.builtin.shell: "{{ nvm_use }}; npm install"
+      args:
+        chdir: "{{ service_dir }}"
+    
+    - name: Generate .env file
+      ansible.builtin.template:
+        src: env.j2
+        dest: "{{ service_dir }}/.env"
+
+    - name: Setup pm2
+      block:
+        - name: Install pm2 globally via npm
+          ansible.builtin.shell: |
+            {{ source_nvm }};
+            npm install -g pm2
+
+        - name: Register Node path
+          ansible.builtin.set_fact:
+            node_path: "{{ lookup('pipe', 'dirname $(which node)') }}"
+          
+        - name: Daemonize pm2 process
+          become: true
+          ansible.builtin.command:
+            cmd: "env PATH=$PATH:{{ node_path }} pm2 startup systemd -u {{ remrob_user }} --hp {{ ansible_env.HOME }}"
+            creates: /etc/systemd/system/pm2-{{ remrob_user }}.service
+
+        - name: Start application with pm2 config
+          ansible.builtin.command:
+            cmd: pm2 startOrReload {{ service_dir }}/ecosystem.config.cjs
+            chdir: "{{ service_dir }}"
+
+    - name: Setup websockify service
+      become: true
+
+      block:
+        - name: Generate websockify.service from template
+          ansible.builtin.template:
+            src: websockify.service.j2
+            dest: /etc/systemd/system/websockify.service
+
+        - name: Reload systemd
+          ansible.builtin.systemd:
+            daemon_reload: yes
+
+        - name: Enable and start service
+          ansible.builtin.systemd:
+            name: websockify.service
+            state: restarted
+            enabled: yes

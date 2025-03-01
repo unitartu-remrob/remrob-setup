@@ -1,0 +1,14 @@
+[Unit]
+Description=Set up Remrob bridge shim network
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/macvlan_link.sh
+User=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

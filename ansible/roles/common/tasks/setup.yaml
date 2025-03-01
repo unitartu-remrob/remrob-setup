@@ -1,0 +1,51 @@
+- name: Setup Remrob application
+
+  block:
+    - name: Install system dependencies
+      apt:
+        name:
+          - git
+          - postgresql
+          - python3-psycopg2
+          - python3-venv
+          - python3-pip
+          - python-is-python3
+          - nginx
+        state: present
+      become: true
+
+    - name: Setup app directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create Remrob postgres DB
+      become: true
+      become_user: postgres
+      block:
+        - name: Create Remrob DB user
+          postgresql_user:
+            name: "{{ db_user }}"
+            password: "{{ db_password }}"
+
+        - name: Create Remrob DB
+          postgresql_db:
+            name: "{{ db_name }}"
+            owner: "{{ db_user }}"
+    
+    - name: Setup Nginx
+      become: true
+      block:
+        - name: Generate nginx.conf from template
+          ansible.builtin.template:
+            src: nginx.conf.j2
+            dest: /etc/nginx/sites-enabled/default
+
+        - name: Reload Nginx
+          ansible.builtin.service:
+            name: nginx
+            state: reloaded
+    
+  
+  

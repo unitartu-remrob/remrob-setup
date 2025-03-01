@@ -1,0 +1,11 @@
+- name: Install remrob-server dependencies
+  become: true
+  
+  block:
+    - name: Install websockify
+      apt:
+        name:
+          - websockify
+        state: present
+
+

@@ -1,0 +1,8 @@
+- name: Install dependencies
+  import_tasks: install-deps.yaml
+
+- name: Build and run container backend service
+  import_tasks: setup.yaml
+
+- name: Generate compose templates
+  import_tasks: compose-templates.yaml

@@ -1,0 +1,8 @@
+- name: Install nvm
+  import_tasks: install-nvm.yaml
+
+- name: Install Docker and Docker Compose
+  import_tasks: install-docker.yaml
+  
+- name: App setup
+  import_tasks: setup.yaml

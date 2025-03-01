@@ -1,0 +1,2 @@
+- name: Setup booking backend and build frontend app
+  import_tasks: setup.yaml

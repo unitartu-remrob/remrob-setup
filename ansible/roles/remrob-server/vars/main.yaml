@@ -1,0 +1,1 @@
+service_dir: "{{ app_dir }}/remrob-server"

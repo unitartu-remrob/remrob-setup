@@ -1,0 +1,12 @@
+[Unit]
+Description=Websockify bridge
+After=network.target
+
+[Service]
+User={{ remrob_user }}
+WorkingDirectory={{ service_dir}}
+ExecStart=websockify --web ./noVNC --token-plugin=TokenFile --token-source={{ service_dir }}/websockify-token.cfg 6085
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

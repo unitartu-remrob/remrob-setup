@@ -1,0 +1,24 @@
+- name: Install Node Version Manager (NVM)
+  tags:
+    - nvm
+  vars:
+    nvm_version: v0.40.1
+    nvm_remote: https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh
+
+  block:
+    - name: Install required dependencies
+      apt:
+        name:
+          - curl
+        state: present
+      become: true
+
+    - name: Check if NVM is already installed
+      stat:
+        path: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+      register: nvm_check
+
+    - name: Download and install NVM
+      shell: |
+        curl -fsSL {{ nvm_remote }} | bash
+      when: not nvm_check.stat.exists

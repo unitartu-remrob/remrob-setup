@@ -1,0 +1,7 @@
+- name: Source NVM script
+  ansible.builtin.set_fact:
+    source_nvm: '. {{ ansible_env.HOME }}/.nvm/nvm.sh'
+
+- name: Select Node version via NVM
+  ansible.builtin.set_fact:
+    nvm_use: '{{ source_nvm }}; nvm use'

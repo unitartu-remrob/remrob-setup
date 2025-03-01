@@ -1,0 +1,22 @@
+- name: Generate compose templates for running containers
+  vars:
+    compose_dir: "{{ service_dir }}/compose"
+  
+  block:
+    - name: Create virtual environment
+      ansible.builtin.command:
+        cmd: python -m venv {{ compose_dir }}/.venv
+        creates: "{{ compose_dir }}/.venv"
+
+    - name: Install py packages through pip
+      ansible.builtin.pip:
+        requirements: "{{ compose_dir }}/requirements.txt"
+        virtualenv: "{{ compose_dir }}/.venv"
+
+    - name: Run compose generator script
+      ansible.builtin.shell: "python3 compose_generator.py"
+      args:
+        chdir: "{{ compose_dir }}"
+      
+
+

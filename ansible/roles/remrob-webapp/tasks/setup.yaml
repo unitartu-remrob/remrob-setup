@@ -1,0 +1,120 @@
+- name: Node env
+  ansible.builtin.include_role:
+    name: shared
+    tasks_from: set-nvm.yaml
+
+- name: Set service dir env
+  vars:
+    service_dir: "{{ app_dir }}/remrob-webapp"
+
+  block:
+    - name: Clone remrob-webapp repository
+      ansible.builtin.git:
+        repo: 'https://github.com/unitartu-remrob/remrob-webapp.git'
+        dest: "{{ service_dir }}"
+        version: ros2
+        update: yes
+        force: yes
+
+    - name: Setup Flask service
+      vars:
+        venv_path: "{{ service_dir }}/.venv"
+        requirements_file: "{{ service_dir }}/requirements.txt"
+
+      block:
+        - name: Setup py venv
+          ansible.builtin.command:
+            cmd: python -m venv {{ venv_path }}
+            creates: "{{ venv_path }}"
+
+        - name: Install py packages through pip
+          ansible.builtin.pip:
+            requirements: "{{ requirements_file }}"
+            virtualenv: "{{ venv_path }}"
+
+        - name: Generate .env file
+          ansible.builtin.template:
+            src: env.j2
+            dest: "{{ service_dir }}/.env.production"
+        
+        - name: Run initial migration to create tables in Remrob DB
+          block:
+            - name: Delete old alembic migration version
+              community.postgresql.postgresql_query:
+                db: "{{ db_name }}"
+                query: "DELETE FROM alembic_version;"
+                login_user: "{{ db_user }}"
+                login_password: "{{ db_password }}"
+                login_host: 127.0.0.1
+              ignore_errors: yes
+              failed_when: false
+
+            - name: Run initial migration setup to create tables
+              shell: |
+                test -d migrations && rm -rf migrations || true
+                export $(grep -v '^#' .env.production | xargs)
+                source {{ venv_path }}/bin/activate
+                flask db init
+                flask db migrate
+                flask db upgrade
+              args:
+                executable: /bin/bash
+                chdir: "{{ service_dir }}"
+
+        - name: Run init.sql script to create admin user
+          block:
+            - name: Copy init.sql script
+              template:
+                src: "{{ role_path }}/templates/init.sql"
+                dest: "/tmp/init.sql"
+
+            - name: Run the init.sql script
+              community.postgresql.postgresql_script:
+                db: "{{ db_name }}"
+                login_user: "{{ db_user }}"
+                login_password: "{{ db_password }}"
+                login_host: 127.0.0.1
+                path: "/tmp/init.sql"
+              ignore_errors: yes
+              failed_when: false
+        
+            - name: Remove init.sql script
+              file:
+                path: "/tmp/init.sql"
+                state: absent
+
+    - name: Build frontend
+      block:
+        - name: Install appropriate Node version
+          ansible.builtin.shell: "{{ source_nvm }}; nvm install"
+          args:
+            chdir: "{{ service_dir }}"
+
+        - name: Install npm modules
+          ansible.builtin.shell: "{{ nvm_use }}; npm install"
+          args:
+            chdir: "{{ service_dir }}"
+        
+        - name: Build Vue app
+          ansible.builtin.shell: "{{ nvm_use }}; npm run build"
+          args:
+            chdir: "{{ service_dir }}"
+
+    - name: Start remrob-flask systemd service
+      become: true
+
+      block:
+        - name: Generate remrob-flask.service from template
+          ansible.builtin.template:
+            src: remrob-flask.service.j2
+            dest: /etc/systemd/system/remrob-flask.service
+
+        - name: Reload systemd
+          ansible.builtin.systemd:
+            daemon_reload: yes
+
+        - name: Enable and start service
+          ansible.builtin.systemd:
+            name: remrob-flask.service
+            state: restarted
+            enabled: yes
