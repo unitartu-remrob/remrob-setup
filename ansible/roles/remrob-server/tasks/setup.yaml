@@ -34,19 +34,19 @@
             {{ source_nvm }};
             npm install -g pm2
 
-        - name: Register Node path
+        - name: Get installed Node path
           ansible.builtin.set_fact:
-            node_path: "{{ lookup('pipe', 'dirname $(which node)') }}"
-          
+            node_path: "{{ lookup('pipe', '(cd ' + service_dir + ' && ' + nvm_use + ' --silent && dirname $(which node))') }}"
+            
         - name: Daemonize pm2 process
           become: true
           ansible.builtin.command:
-            cmd: "env PATH=$PATH:{{ node_path }} pm2 startup systemd -u {{ remrob_user }} --hp {{ ansible_env.HOME }}"
+            cmd: env PATH=$PATH:{{ node_path }} pm2 startup systemd -u {{ remrob_user }} --hp {{ ansible_env.HOME }}
             creates: /etc/systemd/system/pm2-{{ remrob_user }}.service
 
         - name: Start application with pm2 config
           ansible.builtin.command:
-            cmd: pm2 startOrReload {{ service_dir }}/ecosystem.config.cjs
+            cmd: env PATH=$PATH:{{ node_path }} pm2 startOrReload {{ service_dir }}/ecosystem.config.cjs
             chdir: "{{ service_dir }}"
 
     - name: Setup websockify service
