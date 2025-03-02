@@ -49,6 +49,10 @@
             cmd: env PATH=$PATH:{{ node_path }} pm2 startOrReload {{ service_dir }}/ecosystem.config.cjs
             chdir: "{{ service_dir }}"
 
+        - name: Save application for reboot persistence
+          ansible.builtin.command:
+            cmd: env PATH=$PATH:{{ node_path }} pm2 save
+
     - name: Setup websockify service
       become: true
 
