@@ -107,4 +107,67 @@ Instructions on how to add physical robots to the Remrob system are available at
     bash ./image-build.sh --target <noetic|jazzy> --nvidia
     ```
 
+2. Rebuild docker compose templates to use hardware-accelerated image versions
+
+    ```bash
+	cd remrob-app/remrob-server/compose && python compose_generator.py --nvidia
+	```
+
+By default will use X1 display socket for VirtualGL rendering, but if your system uses a different one, then it can be specified with the `--xsocket` flag. e.g.
+
+```bash
+python compose_generator.py --nvidia --xsocket X0
+```
+
 In Remrob app the hardware-accelerate image versions will automatically take precedence over the base versions (see `remrob-app/remrob-server/config/default.json`)
+
+# (optional) Inotify instances
+
+All Remrob containers share the host's cgroup as it is required to run `systemd` within them. Sometimes this may cause overstepping of inotify limits leading to new containers being unable to start.
+
+To support high container load on the server change default inotify settings in `/etc/sysctl.conf`.
+
+```
+# Example of increased default limits
+
+fs.inotify.max_user_watches=131072
+fs.inotify.max_user_instances=1024
+```
+
+# Application structure
+
+![Application Overview](./docs/overview.png)
+
+There are three main services to the Remrob application:
+- remrob-server (the container orchestrating backend)
+- remrob-webapp (the frontend app + Flask booking server)
+- remrob-docker (Docker image build files)
+
+Here are listed ports in use by the Remrob app (make sure there are no conflicts).
+
+| Port | Application |
+|:--------| :-------------|
+| 80 | nginx HTTP |
+| 5000 | Frontend server & Flask API |
+| 5432 | PostgreSQL server |
+| 5901-5909 | Container VNC ports mapped to host |
+| 6085 | Websockify |
+| 9000 | Node Container API |
+
+## Checking service status/logs
+
+### remrob-server
+
+```bash
+pm2 status remrob
+```
+
+### remrob-webapp
+```bash
+journalctl -e -u remrob-flask.service
+```
+
+### websockify
+```bash
+journalctl -e -u websockify.service
+```
