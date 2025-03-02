@@ -33,3 +33,5 @@
       tags: [ remrob-server ]
     - role: remrob-webapp
       tags: [ remrob-webapp ]
+    - role: remrob-docker
+      tags: [ remrob-docker ]
