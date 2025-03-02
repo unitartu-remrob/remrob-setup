@@ -76,10 +76,3 @@
             name: docker
             state: started
             enabled: yes
-  
-        - name: Add 'newgrp docker' to .bashrc
-          ansible.builtin.lineinfile:
-            path: "{{ ansible_env.HOME }}/.bashrc"
-            line: "newgrp docker"
-            create: yes
-            state: present
