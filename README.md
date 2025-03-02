@@ -1,7 +1,10 @@
 # Pre-requisites
 
 - Server running Ubuntu 20.04 or 24.04
-- Docker (>=27.5.0) & Docker Compose
+- Ansible >=2.16
+    ```bash
+    sudo apt install ansible
+    ```
 
 | OS  | Supported ROS containers |
 |---|---|
@@ -10,28 +13,47 @@
 
 ## Installation with Ansible
 
-## Ubuntu 20.04
+### Step 1: run the install script
 
 ```bash
-sudo apt install ansible
-./install.sh
+bash ./install.sh
 ```
 
-## Ubuntu 24.04
+The install script will prompt for the DB password, and JWT secret key.
+The source code will be placed in $HOME/remrob-app.
 
-1. Run install script
+### Step 2: setup of Docker images
 
-    ```bash
-    sudo apt install ansible
-    ./install.sh
-    ```
+If Docker was not installed prior to starting installation, then the playbook in previous step will have installed it.
+However, in scenario where this happens please do a system restart so that the user the ansible script was run as gets properly evaluated as part of the docker user group and the script below runs successfully.
 
-2. Disable unified cgroup architecture (restart to take effect).
-    ```
-    # /etc/default/grub
+### Run remrob-docker ansible playbook
 
-    GRUB_CMDLINE_LINUX_DEFAULT="quiet splash systemd.unified_cgroup_hierarchy=0"
-    ```
+```bash
+ansible-playbook ansible/install.yaml --tags remrob-docker
+```
+
+### Run image build script
+
+**ROS1 Noetic**
+```bash
+bash ./image-build.sh --target noetic
+```
+
+**ROS2 Noetic**
+```bash
+bash ./image-build.sh --target jazzy
+```
+
+## Ubuntu 24.04 additional steps
+
+Disable unified cgroup architecture in grub boot loader (restart to take effect).
+```
+# /etc/default/grub
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet splash systemd.unified_cgroup_hierarchy=0"
+
+sudo update-grub
+```
 
 ## Plugging in robots
 
@@ -55,29 +77,34 @@ Instructions on how to add physical robots to the Remrob system are available at
     ```
 
 2. Configure for Docker
+
     ```
     sudo nvidia-ctk runtime configure --runtime=docker
     sudo systemctl restart docker
     ```
 
 ### Ubuntu 24.04 additional steps
+
 1. Since the VirtualGL setup does not work with Wayland (the default display server for 24.04) need to disable it to force Xorg (restart to take effect).
+
     ```
     #/etc/gdm3/custom.conf
 
     WaylandEnable=false
     ```
+
 2. Enable xhost access for Docker:
+
     ```
     xhost +local:docker
     ```
 
 ## Running hardware accelerated containers
 
-1. Build hardware accelerated images
+1. Build hardware accelerated image versions
 
     ```bash
-    bash ./image-build.sh --nvidia
+    bash ./image-build.sh --target <noetic|jazzy> --nvidia
     ```
 
-2. ...
+In Remrob app the hardware-accelerate image versions will automatically take precedence over the base versions (see `remrob-app/remrob-server/config/default.json`)

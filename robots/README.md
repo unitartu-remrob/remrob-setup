@@ -121,5 +121,3 @@ For making the robot containers available on the frontend application they need 
 These can be managed via the frontend application:
 
 ![Robot inventory frontend](img/robot-inventory.png)
-
-
