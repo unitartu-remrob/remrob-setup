@@ -80,7 +80,7 @@ For running hardware accelerated containers, see [NVIDIA_HWA.md](./NVIDIA_HWA.md
 
 ## (optional) Inotify instances
 
-All Remrob containers share the host's cgroup as it is required to run `systemd` within them. Sometimes this may cause overstepping of inotify limits leading to new containers being unable to start.
+Higher container load (9+ simultaneous containers) can cause [overstepping of inotify limits](https://bugzilla.proxmox.com/show_bug.cgi?id=1042) leading to new containers being unable to start.
 
 To support high container load on the server change default inotify settings in `/etc/sysctl.conf`.
 
