@@ -9,11 +9,7 @@
 
 ### Setup
 
-1. Install nvidia-ctk toolkit
-
-    ```
-    sudo apt install nvidia-container-toolkit
-    ```
+1. Install [nvidia-ctk toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
 2. Configure for Docker
 
