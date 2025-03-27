@@ -9,7 +9,7 @@
       ansible.builtin.git:
         repo: 'https://github.com/unitartu-remrob/remrob-server.git'
         dest: "{{ service_dir }}"
-        version: ros2
+        version: main
         update: yes
 
     - name: Install appropriate Node version

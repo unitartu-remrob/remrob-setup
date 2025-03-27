@@ -3,7 +3,7 @@
 APP_DIR="$HOME/remrob-app"
 
 REPO_URL="https://github.com/unitartu-remrob/remrob-docker"
-GIT_BRANCH="ros2/jazzy"
+GIT_BRANCH="main"
 
 TARGET="jazzy"
 BUILD_FLAGS=""

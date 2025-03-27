@@ -12,7 +12,7 @@
       ansible.builtin.git:
         repo: 'https://github.com/unitartu-remrob/remrob-webapp.git'
         dest: "{{ service_dir }}"
-        version: ros2
+        version: main
         update: yes
         force: yes
 
